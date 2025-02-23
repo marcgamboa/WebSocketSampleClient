@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+   <style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f4f4;
+    }
+    .chat-container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 350px;
+        text-align: center;
+    }
+    h2 {
+        text-align: center;
+    }
+    #messages {
+        border: 1px solid #ccc;
+        padding: 10px;
+        height: 200px;
+        overflow-y: auto;
+        background: #fafafa;
+        text-align: left;
+    }
+    .server-message {
+        color: blue;
+    }
+    .user-message {
+        color: green;
+    }
+    input {
+        width: calc(100% - 60px);
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    .button-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    button {
+        padding: 10px;
+        border-radius: 5px;
+        border: none;
+        background: #007BFF;
+        color: white;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #0056b3;
+    }
+</style>
+</head>
+<body>
+    <div class="chat-container">
+    <h2>WebSocket Chat</h2>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message" onkeypress="if(event.key === 'Enter') sendMessage()" />
+    <div class="button-container">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+    <script>
+		const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+		const wsHost = window.location.hostname;
+		const wsPort = window.location.port ? `:${window.location.port}` : ""; // Render assigns a dynamic port
+		const wsUrl = wsProtocol === "ws" ? "wss://websocketsample-rsbe.onrender.com/game" : `${wsProtocol}://${wsHost}${wsPort}/game`;
+		
+		const ws = new WebSocket(wsUrl);
+	
+        ws.onopen = () => {
+            console.log('Connected to WebSocket server');
+			document.getElementById('messageInput').value = ''; // Clear input on load
+        };
+
+        ws.onmessage = (event) => {
+            console.log('Received:', event.data); // Logging received messages
+			
+			// Check if message starts with "QUESTION::"
+			if (event.data.startsWith("QUESTION::")) {
+				const question = event.data.substring(event.data.indexOf("::") + 2);
+				console.log("[Server]:", question);
+				const userResponse = prompt("Server asked: " + question);
+				if (userResponse) {
+					ws.send(`ANSWER::${userResponse}`);
+				}
+			}else{
+			    const messagesDiv = document.getElementById('messages');
+				messagesDiv.innerHTML += `<p class="server-message">Server: ${event.data}</p>`;
+				setTimeout(() => {
+					messagesDiv.scrollTop = messagesDiv.scrollHeight;
+				}, 100);
+			}
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        function sendMessage() {
+		 const input = document.getElementById('messageInput');
+			const message = input.value.trim();
+			if (message && ws.readyState === WebSocket.OPEN) {
+				ws.send(message);
+				const messagesDiv = document.getElementById('messages');
+				messagesDiv.innerHTML += `<p class="user-message">You: ${message}</p>`;
+				input.value = '';
+				setTimeout(() => {
+					messagesDiv.scrollTop = messagesDiv.scrollHeight;
+				}, 100); // Delay scrolling to ensure the DOM updates
+			} else {
+				console.log('WebSocket is not open or message is empty');
+			}
+        }
+    </script>
+</body>
+</html>
