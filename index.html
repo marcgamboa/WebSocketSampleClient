@@ -74,12 +74,7 @@
 </div>
 
     <script>
-		const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-		const wsHost = window.location.hostname;
-		const wsPort = window.location.port ? `:${window.location.port}` : ""; // Render assigns a dynamic port
-		const wsUrl = wsProtocol === "ws" ? "wss://websocketsample-rsbe.onrender.com/game" : `${wsProtocol}://${wsHost}${wsPort}/game`;
-		
-		const ws = new WebSocket(wsUrl);
+		const ws = new WebSocket("wss://websocketsample-rsbe.onrender.com/game");
 	
         ws.onopen = () => {
             console.log('Connected to WebSocket server');
